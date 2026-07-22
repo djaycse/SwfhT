@@ -1,29 +1,55 @@
 package net.qs.swfht
 
 import android.widget.ImageView
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import kotlinx.coroutines.launch
 import net.qs.swfht.data.WorkDataStore
-import net.qs.swfht.BuildConfig
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
@@ -44,9 +70,9 @@ fun SWFHTApp() {
     val savedMap by store.workMap.collectAsState(initial = emptyMap())
 
     val dayStates = remember(savedMap) {
-        mutableStateMapOf<String, WorkLocation>().apply {
+        mutableStateMapOf<String, DayState>().apply {
             savedMap.forEach { (date, value) ->
-                put(date, WorkLocation.valueOf(value))
+                put(date, value)
             }
         }
     }
@@ -158,40 +184,60 @@ fun SWFHTApp() {
 
             Spacer(Modifier.height(8.dp))
 
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Box(
-                    Modifier
-                        .size(12.dp)
-                        .border(1.dp, Color.Black)
-                        .background(Color(0xFFFFA500))
-                )
-                Spacer(Modifier.width(4.dp))
-                Text("Team hub", style = MaterialTheme.typography.bodySmall)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(12.dp)
+                            .background(Color(0xFFFFA500))
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Team Hub", style = MaterialTheme.typography.bodySmall)
 
-                Spacer(Modifier.width(16.dp))
+                    Spacer(Modifier.width(16.dp))
 
-                Box(
-                    Modifier
-                        .size(12.dp)
-                        .border(1.dp, Color.Black)
-                        .background(Color(0xFF4CAF50))
-                )
-                Spacer(Modifier.width(4.dp))
-                Text("Other office", style = MaterialTheme.typography.bodySmall)
+                    Box(
+                        Modifier
+                            .size(12.dp)
+                            .background(Color(0xFF4CAF50))
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Other Office", style = MaterialTheme.typography.bodySmall)
 
-                Spacer(Modifier.width(16.dp))
+                    Spacer(Modifier.width(16.dp))
 
-                Box(
-                    Modifier
-                        .size(12.dp)
-                        .border(1.dp, Color.Black)
-                )
-                Spacer(Modifier.width(4.dp))
-                Text("WFH", style = MaterialTheme.typography.bodySmall)
+                    Box(
+                        Modifier
+                            .size(12.dp)
+                            .border(1.5.dp, MaterialTheme.colorScheme.onSurface)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("WFH", style = MaterialTheme.typography.bodySmall)
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(12.dp)
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Planned (Tap)", style = MaterialTheme.typography.bodySmall)
+
+                    Spacer(Modifier.width(16.dp))
+
+                    Box(
+                        Modifier
+                            .size(12.dp)
+                            .border(1.5.dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Actual (Long Press)", style = MaterialTheme.typography.bodySmall)
+                }
             }
 
             Spacer(Modifier.height(16.dp))
@@ -251,34 +297,37 @@ fun SWFHTApp() {
             title = { Text("How to use") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Tap a date to toggle PLANNED state (Filled Circle).")
+                    Text("Press and Hold a date to toggle ACTUAL state (Border Box).")
+                    
+                    HorizontalDivider()
+                    
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             Modifier
                                 .size(16.dp)
-                                .background(Color(0xFFFFA500))
-                                .border(1.dp, Color.Black)
+                                .background(Color(0xFFFFA500), CircleShape)
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("Tap day to mark attendance at team hub")
+                        Text("Team Hub (Orange)")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             Modifier
                                 .size(16.dp)
-                                .background(Color(0xFF4CAF50))
-                                .border(1.dp, Color.Black)
+                                .background(Color(0xFF4CAF50), CircleShape)
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("Tap again to mark attendance at another office")
+                        Text("Other Office (Green)")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             Modifier
                                 .size(16.dp)
-                                .border(1.dp, Color.Black)
+                                .border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("Tap again to mark as Work-From-Home")
+                        Text("WFH (No colour)")
                     }
                 }
             },

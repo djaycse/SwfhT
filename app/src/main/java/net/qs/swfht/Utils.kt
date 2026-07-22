@@ -13,7 +13,7 @@ fun colorFor(state: WorkLocation): Color {
 
 fun calculateStats(
     month: YearMonth,
-    data: Map<String, WorkLocation>
+    data: Map<String, DayState>
 ): MonthStats {
 
     val daysInMonth = month.lengthOfMonth()
@@ -27,7 +27,8 @@ fun calculateStats(
         val isWeekday = date.dayOfWeek.value in 1..5
 
         val key = "${month.year}-${month.monthValue}-%02d".format(day)
-        val state = data[key] ?: WorkLocation.HOME
+        val dayState = data[key] ?: DayState()
+        val state = dayState.actual
 
         if (state == WorkLocation.BASE) {
             baseCount++
@@ -53,7 +54,7 @@ fun calculateStats(
 
 fun calculateInsights(
     month: YearMonth,
-    data: Map<String, WorkLocation>
+    data: Map<String, DayState>
 ): MonthInsights {
 
     val daysInMonth = month.lengthOfMonth()
@@ -65,7 +66,8 @@ fun calculateInsights(
     for (day in 1..daysInMonth) {
 
         val key = "${month.year}-${month.monthValue}-%02d".format(day)
-        val state = data[key] ?: WorkLocation.HOME
+        val dayState = data[key] ?: DayState()
+        val state = dayState.actual
 
         val isOffice = state != WorkLocation.HOME
 

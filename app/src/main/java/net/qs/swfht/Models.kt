@@ -6,6 +6,11 @@ enum class WorkLocation {
     OTHER
 }
 
+data class DayState(
+    val planned: WorkLocation = WorkLocation.HOME,
+    val actual: WorkLocation = WorkLocation.HOME
+)
+
 data class MonthStats(
     val nonWfhPercent: Int,
     val baseCount: Int,

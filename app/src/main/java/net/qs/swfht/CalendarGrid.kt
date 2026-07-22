@@ -1,11 +1,12 @@
 package net.qs.swfht
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -20,10 +21,11 @@ import net.qs.swfht.data.WorkDataStore
 import java.time.LocalDate
 import java.time.YearMonth
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CalendarGrid(
     month: YearMonth,
-    dayStates: MutableMap<String, WorkLocation>,
+    dayStates: MutableMap<String, DayState>,
     scope: CoroutineScope,
     store: WorkDataStore
 ) {
@@ -64,18 +66,13 @@ fun CalendarGrid(
                         "${month.year}-${month.monthValue}-%02d".format(dayNumber)
                     else ""
 
-                    val state = dayStates[dateKey] ?: WorkLocation.HOME
+                    val dayState = dayStates[dateKey] ?: DayState()
 
                     val isToday =
                         valid &&
                                 dayNumber == today.dayOfMonth &&
                                 month.year == today.year &&
                                 month.monthValue == today.monthValue
-
-                    val animatedColor by animateColorAsState(
-                        targetValue = colorFor(state),
-                        label = "cellColor"
-                    )
 
                     Box(
                         modifier = Modifier
@@ -89,47 +86,86 @@ fun CalendarGrid(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
+                                    // Today highlight: full size themed border
                                     .border(
                                         width = if (isToday) 2.dp else 0.dp,
-                                        color = if (isToday) MaterialTheme.colorScheme.onSurface else Color.Transparent
+                                        color = if (isToday) MaterialTheme.colorScheme.primary else Color.Transparent
                                     )
-                                    .background(animatedColor)
-                                    .clickable(
+                                    .combinedClickable(
                                         interactionSource = remember { MutableInteractionSource() },
-                                        indication = null
-                                    ) {
-
-                                        val next = when (state) {
-                                            WorkLocation.HOME -> WorkLocation.BASE
-                                            WorkLocation.BASE -> WorkLocation.OTHER
-                                            WorkLocation.OTHER -> WorkLocation.HOME
-                                        }
-
-                                        if (next == WorkLocation.HOME) {
-                                            dayStates.remove(dateKey)
-                                        } else {
-                                            dayStates[dateKey] = next
-                                        }
-
-                                        scope.launch {
-                                            if (next == WorkLocation.HOME) {
-                                                store.delete(dateKey)
-                                            } else {
-                                                store.save(dateKey, next.name)
+                                        indication = null,
+                                        onClick = {
+                                            val nextPlanned = when (dayState.planned) {
+                                                WorkLocation.HOME -> WorkLocation.BASE
+                                                WorkLocation.BASE -> WorkLocation.OTHER
+                                                WorkLocation.OTHER -> WorkLocation.HOME
                                             }
+                                            val newState = dayState.copy(planned = nextPlanned)
+                                            updateState(dateKey, newState, dayStates, scope, store)
+                                        },
+                                        onLongClick = {
+                                            val nextActual = when (dayState.actual) {
+                                                WorkLocation.HOME -> WorkLocation.BASE
+                                                WorkLocation.BASE -> WorkLocation.OTHER
+                                                WorkLocation.OTHER -> WorkLocation.HOME
+                                            }
+                                            val newState = dayState.copy(actual = nextActual)
+                                            updateState(dateKey, newState, dayStates, scope, store)
                                         }
-                                    },
+                                    ),
                                 contentAlignment = Alignment.Center
                             ) {
+                                // Planned state: Filled circle (Inner)
+                                if (dayState.planned != WorkLocation.HOME) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(if (isToday) 10.dp else 8.dp) // Smaller inner circle
+                                            .background(colorFor(dayState.planned), CircleShape)
+                                    )
+                                }
+
+                                // Actual state: Circle border (Outer)
+                                if (dayState.actual != WorkLocation.HOME) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(if (isToday) 4.dp else 2.dp) // Outer circle
+                                            .border(3.dp, colorFor(dayState.actual), CircleShape)
+                                    )
+                                }
+
                                 Text(
                                     text = dayNumber.toString(),
-                                    color = if (state == WorkLocation.HOME) MaterialTheme.colorScheme.onSurface else Color.Black
+                                    color = if (dayState.planned == WorkLocation.HOME) MaterialTheme.colorScheme.onSurface else Color.Black
                                 )
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+private fun updateState(
+    dateKey: String,
+    newState: DayState,
+    dayStates: MutableMap<String, DayState>,
+    scope: CoroutineScope,
+    store: WorkDataStore
+) {
+    if (newState.planned == WorkLocation.HOME && newState.actual == WorkLocation.HOME) {
+        dayStates.remove(dateKey)
+    } else {
+        dayStates[dateKey] = newState
+    }
+
+    scope.launch {
+        if (newState.planned == WorkLocation.HOME && newState.actual == WorkLocation.HOME) {
+            store.delete(dateKey)
+        } else {
+            store.save(dateKey, newState)
         }
     }
 }
