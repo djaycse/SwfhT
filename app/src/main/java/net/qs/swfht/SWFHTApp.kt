@@ -19,7 +19,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -50,6 +52,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import net.qs.swfht.data.WorkDataStore
+import net.qs.swfht.worker.LocationWorker
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.compose.runtime.LaunchedEffect
+import java.time.Duration
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
@@ -61,6 +69,8 @@ fun SWFHTApp() {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
     var showHelp by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
+    var showOfficeLocations by remember { mutableStateOf(false) }
+    var showWifiSettings by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
 
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -68,6 +78,33 @@ fun SWFHTApp() {
     val scope = rememberCoroutineScope()
 
     val savedMap by store.workMap.collectAsState(initial = emptyMap())
+    val pollInterval by store.pollIntervalMinutes.collectAsState(initial = 30L)
+
+    LaunchedEffect(pollInterval) {
+        val workRequest = PeriodicWorkRequestBuilder<LocationWorker>(Duration.ofMinutes(pollInterval))
+            .build()
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "location_scan",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            workRequest
+        )
+    }
+
+    if (showOfficeLocations) {
+        OfficeLocationsScreen(
+            store = store,
+            onBack = { showOfficeLocations = false }
+        )
+        return
+    }
+
+    if (showWifiSettings) {
+        WifiSettingsScreen(
+            store = store,
+            onBack = { showWifiSettings = false }
+        )
+        return
+    }
 
     val dayStates = remember(savedMap) {
         mutableStateMapOf<String, DayState>().apply {
@@ -118,6 +155,26 @@ fun SWFHTApp() {
                                 },
                                 leadingIcon = {
                                     Icon(Icons.Default.Help, contentDescription = null)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Office locations") },
+                                onClick = {
+                                    menuExpanded = false
+                                    showOfficeLocations = true
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.LocationOn, contentDescription = null)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Wi-Fi Settings") },
+                                onClick = {
+                                    menuExpanded = false
+                                    showWifiSettings = true
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Wifi, contentDescription = null)
                                 }
                             )
                             DropdownMenuItem(

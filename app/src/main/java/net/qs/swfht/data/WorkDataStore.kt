@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import net.qs.swfht.DayState
+import net.qs.swfht.OfficeLocation
 import net.qs.swfht.WorkLocation
 
 // DataStore instance
@@ -16,6 +17,9 @@ class WorkDataStore(private val context: Context) {
 
     companion object {
         private val KEY_DATA = stringPreferencesKey("work_map")
+        private val KEY_OFFICE_LOCATIONS = stringPreferencesKey("office_locations")
+        private val KEY_WIFI_SSID = stringPreferencesKey("wifi_ssid")
+        private val KEY_POLL_INTERVAL = stringPreferencesKey("poll_interval")
     }
 
     // Read full map
@@ -71,5 +75,57 @@ class WorkDataStore(private val context: Context) {
 
     suspend fun clearAll() {
         context.dataStore.edit { it.clear() }
+    }
+
+    val officeLocations: Flow<List<OfficeLocation>> =
+        context.dataStore.data.map { prefs ->
+            val raw = prefs[KEY_OFFICE_LOCATIONS] ?: ""
+            if (raw.isEmpty()) return@map emptyList()
+
+            raw.split("|")
+                .filter { it.contains(",") }
+                .map { entry ->
+                    val parts = entry.split(",")
+                    OfficeLocation(
+                        name = if (parts.size > 3) parts[3] else "Office",
+                        lat = parts[0].toDoubleOrNull() ?: 0.0,
+                        lng = parts[1].toDoubleOrNull() ?: 0.0,
+                        type = try {
+                            WorkLocation.valueOf(parts[2])
+                        } catch (e: Exception) {
+                            WorkLocation.BASE
+                        }
+                    )
+                }
+        }
+
+    suspend fun saveOfficeLocations(locations: List<OfficeLocation>) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_OFFICE_LOCATIONS] = locations.joinToString("|") {
+                "${it.lat},${it.lng},${it.type.name},${it.name}"
+            }
+        }
+    }
+
+    val wifiSsid: Flow<String> =
+        context.dataStore.data.map { prefs ->
+            prefs[KEY_WIFI_SSID] ?: "TRANSPORT GUEST"
+        }
+
+    suspend fun saveWifiSsid(ssid: String) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_WIFI_SSID] = ssid
+        }
+    }
+
+    val pollIntervalMinutes: Flow<Long> =
+        context.dataStore.data.map { prefs ->
+            prefs[KEY_POLL_INTERVAL]?.toLongOrNull() ?: 30L
+        }
+
+    suspend fun savePollInterval(minutes: Long) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_POLL_INTERVAL] = minutes.toString()
+        }
     }
 }

@@ -22,3 +22,10 @@ data class MonthInsights(
     val currentStreak: Int,
     val warningText: String?
 )
+
+data class OfficeLocation(
+    val name: String,
+    val lat: Double,
+    val lng: Double,
+    val type: WorkLocation
+)
