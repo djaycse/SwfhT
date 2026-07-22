@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
@@ -59,7 +61,6 @@ import androidx.work.WorkManager
 import androidx.compose.runtime.LaunchedEffect
 import java.time.Duration
 import java.time.YearMonth
-import java.time.format.TextStyle
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -199,6 +200,7 @@ fun SWFHTApp() {
                 .padding(padding)
                 .padding(16.dp)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
 
             MonthHeader(
@@ -207,7 +209,7 @@ fun SWFHTApp() {
                 onNext = { currentMonth = currentMonth.plusMonths(1) }
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(4.dp))
 
             var totalDrag by remember { mutableFloatStateOf(0f) }
 
@@ -239,82 +241,74 @@ fun SWFHTApp() {
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
 
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier
-                            .size(12.dp)
-                            .background(Color(0xFFFFA500))
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text("Team Hub", style = MaterialTheme.typography.bodySmall)
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            Modifier
+                                .size(12.dp)
+                                .background(Color(0xFFFFA500))
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text("Team Hub", style = MaterialTheme.typography.bodySmall)
 
-                    Spacer(Modifier.width(16.dp))
+                        Spacer(Modifier.width(16.dp))
 
-                    Box(
-                        Modifier
-                            .size(12.dp)
-                            .background(Color(0xFF4CAF50))
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text("Other Office", style = MaterialTheme.typography.bodySmall)
+                        Box(
+                            Modifier
+                                .size(12.dp)
+                                .background(Color(0xFF4CAF50))
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text("Other Office", style = MaterialTheme.typography.bodySmall)
 
-                    Spacer(Modifier.width(16.dp))
+                        Spacer(Modifier.width(16.dp))
 
-                    Box(
-                        Modifier
-                            .size(12.dp)
-                            .border(1.5.dp, MaterialTheme.colorScheme.onSurface)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text("WFH", style = MaterialTheme.typography.bodySmall)
-                }
+                        Box(
+                            Modifier
+                                .size(12.dp)
+                                .border(1.5.dp, MaterialTheme.colorScheme.onSurface)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text("WFH", style = MaterialTheme.typography.bodySmall)
+                    }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier
-                            .size(12.dp)
-                            .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text("Planned (Tap)", style = MaterialTheme.typography.bodySmall)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            Modifier
+                                .size(12.dp)
+                                .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text("Planned (Tap)", style = MaterialTheme.typography.bodySmall)
 
-                    Spacer(Modifier.width(16.dp))
+                        Spacer(Modifier.width(16.dp))
 
-                    Box(
-                        Modifier
-                            .size(12.dp)
-                            .border(1.5.dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text("Actual (Long Press)", style = MaterialTheme.typography.bodySmall)
+                        Box(
+                            Modifier
+                                .size(12.dp)
+                                .border(1.5.dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text("Actual (Long Press)", style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
 
             val stats = calculateStats(currentMonth, dayStates)
 
-            val monthName = currentMonth.month.getDisplayName(
-                TextStyle.FULL,
-                Locale.getDefault()
-            )
-
             Card {
                 Column(Modifier.padding(12.dp)) {
-
-                    Text(
-                        text = "Stats for $monthName",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Spacer(Modifier.height(8.dp))
 
                     LinearProgressIndicator(
                         progress = { (stats.nonWfhPercent / 50f).coerceIn(0f, 1f) },
@@ -323,25 +317,32 @@ fun SWFHTApp() {
 
                     Spacer(Modifier.height(8.dp))
 
-                    Text("In office: ${stats.nonWfhPercent}%")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("In office: ${stats.nonWfhPercent}%")
+                            if (stats.nonWfhPercent >= 50) {
+                                Text(
+                                    "✔ 50% met",
+                                    color = Color(0xFF2E7D32),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
 
-                    if (stats.nonWfhPercent >= 50) {
-                        Text(
-                            "✔ Meets 50% requirement",
-                            color = Color(0xFF2E7D32) // green
-                        )
-                    }
-
-                    Spacer(Modifier.height(12.dp))
-
-                    val teamHubLabel = if (stats.baseCount == 1) "day" else "days"
-                    Text("Team hub: ${stats.baseCount} $teamHubLabel")
-
-                    if (stats.baseCount >= 5) {
-                        Text(
-                            "✔ Meets 5 day requirement",
-                            color = Color(0xFF2E7D32) // green
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            val teamHubLabel = if (stats.baseCount == 1) "day" else "days"
+                            Text("Team hub: ${stats.baseCount} $teamHubLabel")
+                            if (stats.baseCount >= 5) {
+                                Text(
+                                    "✔ 5 days met",
+                                    color = Color(0xFF2E7D32),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -406,9 +407,7 @@ fun SWFHTApp() {
                     Spacer(Modifier.height(16.dp))
                     Text("Developed by the NBA dev team.")
                     Spacer(Modifier.height(16.dp))
-                    Text("Change log...", style = MaterialTheme.typography.titleSmall)
-                    Text("Version ${BuildConfig.VERSION_NAME}:")
-                    Text("- First release.")
+                    Text("Copyright © 2026")
                 }
             },
             confirmButton = {

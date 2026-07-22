@@ -50,9 +50,12 @@ fun CalendarGrid(
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
-        for (row in 0..5) {
+        val totalCells = startOffset + daysInMonth
+        val rowsNeeded = kotlin.math.ceil(totalCells / 7.0).toInt()
+
+        for (row in 0 until rowsNeeded) {
             Row(Modifier.fillMaxWidth()) {
 
                 for (col in 0..6) {

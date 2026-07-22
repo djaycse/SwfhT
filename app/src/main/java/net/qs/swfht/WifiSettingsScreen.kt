@@ -44,8 +44,14 @@ fun WifiSettingsScreen(
                 .fillMaxSize()
         ) {
             Text(
-                "Configure background update settings.",
+                "Office auto-detection settings",
                 style = MaterialTheme.typography.titleMedium
+            )
+
+            Text(
+                "The app will periodically check if the specified office Wi-Fi network is available. If found, the app will cross-check your GPS location against any of the office locations you have configured, and automatically set whether you are in your Team hub or another office location.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             
             Spacer(Modifier.height(16.dp))
@@ -53,7 +59,7 @@ fun WifiSettingsScreen(
             OutlinedTextField(
                 value = ssidValue,
                 onValueChange = { ssidValue = it },
-                label = { Text("Wi-Fi SSID") },
+                label = { Text("Office Wi-Fi network name (SSID)") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -62,7 +68,7 @@ fun WifiSettingsScreen(
             OutlinedTextField(
                 value = intervalValue,
                 onValueChange = { intervalValue = it },
-                label = { Text("Poll Interval (minutes)") },
+                label = { Text("Wi-Fi polling Interval (minutes)") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
