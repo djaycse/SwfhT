@@ -1,7 +1,17 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
+
+val versionPropsFile = rootProject.file("version.properties")
+val versionProps = Properties()
+if (versionPropsFile.exists()) {
+    versionProps.load(versionPropsFile.inputStream())
+}
+val vName = versionProps.getProperty("versionName", "1.0")
+val vCode = versionProps.getProperty("versionCode", "1").toInt()
 
 android {
     namespace = "net.qs.swfht"
@@ -15,8 +25,8 @@ android {
         applicationId = "net.qs.swfht"
         minSdk = 28
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = vCode
+        versionName = vName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -34,6 +44,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

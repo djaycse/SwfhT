@@ -4,6 +4,7 @@ import android.widget.ImageView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -16,11 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.launch
 import net.qs.swfht.data.WorkDataStore
+import net.qs.swfht.BuildConfig
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
@@ -66,7 +69,7 @@ fun SWFHTApp() {
 
                         Spacer(Modifier.width(8.dp))
 
-                        Text("SwfhT v1.0")
+                        Text("SwfhT v${BuildConfig.VERSION_NAME}")
                     }
                 },
                 actions = {
@@ -123,12 +126,73 @@ fun SWFHTApp() {
 
             Spacer(Modifier.height(12.dp))
 
-            CalendarGrid(
-                month = currentMonth,
-                dayStates = dayStates,
-                scope = scope,
-                store = store
-            )
+            var totalDrag by remember { mutableFloatStateOf(0f) }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(currentMonth) {
+                        detectHorizontalDragGestures(
+                            onDragStart = { totalDrag = 0f },
+                            onDragEnd = {
+                                if (totalDrag > 100) {
+                                    currentMonth = currentMonth.minusMonths(1)
+                                } else if (totalDrag < -100) {
+                                    currentMonth = currentMonth.plusMonths(1)
+                                }
+                            },
+                            onHorizontalDrag = { change, dragAmount ->
+                                change.consume()
+                                totalDrag += dragAmount
+                            }
+                        )
+                    }
+            ) {
+                CalendarGrid(
+                    month = currentMonth,
+                    dayStates = dayStates,
+                    scope = scope,
+                    store = store
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    Modifier
+                        .size(12.dp)
+                        .border(1.dp, Color.Black)
+                        .background(Color(0xFFFFA500))
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("Team hub", style = MaterialTheme.typography.bodySmall)
+
+                Spacer(Modifier.width(16.dp))
+
+                Box(
+                    Modifier
+                        .size(12.dp)
+                        .border(1.dp, Color.Black)
+                        .background(Color(0xFF4CAF50))
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("Other office", style = MaterialTheme.typography.bodySmall)
+
+                Spacer(Modifier.width(16.dp))
+
+                Box(
+                    Modifier
+                        .size(12.dp)
+                        .border(1.dp, Color.Black)
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("WFH", style = MaterialTheme.typography.bodySmall)
+            }
 
             Spacer(Modifier.height(16.dp))
 
@@ -192,7 +256,7 @@ fun SWFHTApp() {
                             Modifier
                                 .size(16.dp)
                                 .background(Color(0xFFFFA500))
-                                .border(1.dp, Color.Gray)
+                                .border(1.dp, Color.Black)
                         )
                         Spacer(Modifier.width(8.dp))
                         Text("Tap day to mark attendance at team hub")
@@ -202,7 +266,7 @@ fun SWFHTApp() {
                             Modifier
                                 .size(16.dp)
                                 .background(Color(0xFF4CAF50))
-                                .border(1.dp, Color.Gray)
+                                .border(1.dp, Color.Black)
                         )
                         Spacer(Modifier.width(8.dp))
                         Text("Tap again to mark attendance at another office")
@@ -211,7 +275,7 @@ fun SWFHTApp() {
                         Box(
                             Modifier
                                 .size(16.dp)
-                                .border(1.dp, Color.Gray)
+                                .border(1.dp, Color.Black)
                         )
                         Spacer(Modifier.width(8.dp))
                         Text("Tap again to mark as Work-From-Home")
@@ -237,7 +301,7 @@ fun SWFHTApp() {
                     Text("Developed by the NBA dev team.")
                     Spacer(Modifier.height(16.dp))
                     Text("Change log...", style = MaterialTheme.typography.titleSmall)
-                    Text("Version 1.0:")
+                    Text("Version ${BuildConfig.VERSION_NAME}:")
                     Text("- First release.")
                 }
             },
