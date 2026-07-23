@@ -13,6 +13,9 @@ SwfhT is a lightweight Android application designed to help employees track thei
 
 ## Changelog
 
+### Version 1.2.1
+*   **Bug-fix**: Version string was not updated in UI.
+
 ### Version 1.2.0
 *   **UI Layout Overhaul**: Anchored the Legend and Stats sections to the bottom of the screen for constant visibility while the calendar remains scrollable.
 *   **Enhanced Stats Visualization**:
