@@ -13,6 +13,23 @@ SwfhT is a lightweight Android application designed to help employees track thei
 
 ## Changelog
 
+### Version 1.2.0
+*   **UI Layout Overhaul**: Anchored the Legend and Stats sections to the bottom of the screen for constant visibility while the calendar remains scrollable.
+*   **Enhanced Stats Visualization**:
+    - Redesigned the Stats panel into "In Office" and "Team Hub" categories.
+    - Introduced "Planned" vs "Actual" progress bars for each category.
+    - Added real-time status icons (green tick/red cross) to track progress toward the 50% office and 5-day Team Hub requirements.
+*   **Smart Detection Status**:
+    - Added a "Currently detected location" label on the main dashboard.
+    - Displays the specific configured office name (e.g., "HQ") instead of generic categories when a match is found.
+    - Triggers an immediate location scan on app launch and after saving settings for instant feedback.
+*   **API Modernization**:
+    - Migrated Wi-Fi detection to modern `ConnectivityManager` APIs for better support on Android 12+ and 13+.
+    - Refined GPS detection radius to 50m for improved accuracy.
+*   **Reliability & Performance**:
+    - Implemented date key normalization to ensure data consistency between manual entries and background detections.
+    - Added user-friendly Toast notifications when an office location is automatically detected.
+
 ### Version 1.1.0
 *   **Office Auto-Detection**: Introduced a background service that periodically polls for specific office Wi-Fi networks.
 *   **GPS Integration**: Added GPS cross-referencing to automatically update your "Actual" attendance state when within 50m of a configured office.
