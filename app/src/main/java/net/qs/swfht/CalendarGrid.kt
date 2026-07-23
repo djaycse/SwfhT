@@ -66,7 +66,7 @@ fun CalendarGrid(
                     val valid = dayNumber in 1..daysInMonth
 
                     val dateKey = if (valid)
-                        "${month.year}-${month.monthValue}-%02d".format(dayNumber)
+                        "%d-%02d-%02d".format(month.year, month.monthValue, dayNumber)
                     else ""
 
                     val dayState = dayStates[dateKey] ?: DayState()

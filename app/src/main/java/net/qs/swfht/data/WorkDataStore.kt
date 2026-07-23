@@ -32,16 +32,29 @@ class WorkDataStore(private val context: Context) {
                 .filter { it.contains(":") }
                 .associate { entry ->
                     val parts = entry.split(":")
-                    val date = parts[0]
+                    val rawDate = parts[0]
+                    val date = try {
+                        val dateParts = rawDate.split("-")
+                        if (dateParts.size == 3) {
+                            "%d-%02d-%02d".format(
+                                dateParts[0].toInt(),
+                                dateParts[1].toInt(),
+                                dateParts[2].toInt()
+                            )
+                        } else rawDate
+                    } catch (e: Exception) {
+                        rawDate
+                    }
                     val values = parts[1].split(",")
                     
                     val plannedStr = values[0]
-                    val actualStr = if (values.size > 1) values[1] else values[0] // Default actual to planned for legacy
+                    val actualStr = if (values.size > 1) values[1] else values[0]
+                    val locationName = if (values.size > 2) values[2].ifEmpty { null } else null
 
                     val planned = try { WorkLocation.valueOf(plannedStr) } catch(e: Exception) { WorkLocation.HOME }
                     val actual = try { WorkLocation.valueOf(actualStr) } catch(e: Exception) { WorkLocation.HOME }
                     
-                    date to DayState(planned, actual)
+                    date to DayState(planned, actual, locationName)
                 }
         }
 
@@ -50,11 +63,23 @@ class WorkDataStore(private val context: Context) {
         context.dataStore.edit { prefs ->
             val current = prefs[KEY_DATA] ?: ""
 
+            // Normalize all existing entries and filter out the one being saved
             val map = current.split("|")
-                .filter { it.contains(":") && !it.startsWith("$date:") }
+                .filter { it.contains(":") }
+                .mapNotNull { entry ->
+                    val parts = entry.split(":")
+                    val rawDate = parts[0]
+                    val normalizedDate = try {
+                        val dp = rawDate.split("-")
+                        if (dp.size == 3) "%d-%02d-%02d".format(dp[0].toInt(), dp[1].toInt(), dp[2].toInt())
+                        else rawDate
+                    } catch (e: Exception) { rawDate }
+                    
+                    if (normalizedDate == date) null else "$normalizedDate:${parts[1]}"
+                }
                 .toMutableList()
 
-            map.add("$date:${state.planned.name},${state.actual.name}")
+            map.add("$date:${state.planned.name},${state.actual.name},${state.locationName ?: ""}")
 
             prefs[KEY_DATA] = map.joinToString("|")
         }
@@ -66,7 +91,18 @@ class WorkDataStore(private val context: Context) {
             val current = prefs[KEY_DATA] ?: ""
 
             val filtered = current.split("|")
-                .filter { !it.startsWith("$date:") }
+                .filter { it.contains(":") }
+                .mapNotNull { entry ->
+                    val parts = entry.split(":")
+                    val rawDate = parts[0]
+                    val normalizedDate = try {
+                        val dp = rawDate.split("-")
+                        if (dp.size == 3) "%d-%02d-%02d".format(dp[0].toInt(), dp[1].toInt(), dp[2].toInt())
+                        else rawDate
+                    } catch (e: Exception) { rawDate }
+                    
+                    if (normalizedDate == date) null else "$normalizedDate:${parts[1]}"
+                }
                 .joinToString("|")
 
             prefs[KEY_DATA] = filtered
@@ -109,7 +145,7 @@ class WorkDataStore(private val context: Context) {
 
     val wifiSsid: Flow<String> =
         context.dataStore.data.map { prefs ->
-            prefs[KEY_WIFI_SSID] ?: "TRANSPORT GUEST"
+            prefs[KEY_WIFI_SSID] ?: "TRANSPORT"
         }
 
     suspend fun saveWifiSsid(ssid: String) {

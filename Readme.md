@@ -15,7 +15,7 @@ SwfhT is a lightweight Android application designed to help employees track thei
 
 ### Version 1.1.0
 *   **Office Auto-Detection**: Introduced a background service that periodically polls for specific office Wi-Fi networks.
-*   **GPS Integration**: Added GPS cross-referencing to automatically update your "Actual" attendance state when within 200m of a configured office.
+*   **GPS Integration**: Added GPS cross-referencing to automatically update your "Actual" attendance state when within 50m of a configured office.
 *   **Office Locations Management**: New screen to manage up to 5 office locations with custom names and coordinates.
 *   **Current Location Sync**: Added a "Set to current location" button to easily capture GPS coordinates using the device's sensors.
 *   **Enhanced Wi-Fi & Polling Settings**: 

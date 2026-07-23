@@ -18,36 +18,51 @@ fun calculateStats(
 
     val daysInMonth = month.lengthOfMonth()
 
-    var baseCount = 0
-    var nonWfhWeekdays = 0
+    var actualBaseCount = 0
+    var actualNonWfhWeekdays = 0
+    var plannedBaseCount = 0
+    var plannedNonWfhWeekdays = 0
     var totalWeekdays = 0
 
     for (day in 1..daysInMonth) {
         val date = month.atDay(day)
         val isWeekday = date.dayOfWeek.value in 1..5
 
-        val key = "${month.year}-${month.monthValue}-%02d".format(day)
+        val key = "%d-%02d-%02d".format(month.year, month.monthValue, day)
         val dayState = data[key] ?: DayState()
-        val state = dayState.actual
 
-        if (state == WorkLocation.BASE) {
-            baseCount++
+        // Actual
+        if (dayState.actual == WorkLocation.BASE) {
+            actualBaseCount++
+        }
+
+        // Planned
+        if (dayState.planned == WorkLocation.BASE) {
+            plannedBaseCount++
         }
 
         if (isWeekday) {
             totalWeekdays++
-            if (state != WorkLocation.HOME) {
-                nonWfhWeekdays++
+            if (dayState.actual != WorkLocation.HOME) {
+                actualNonWfhWeekdays++
+            }
+            if (dayState.planned != WorkLocation.HOME) {
+                plannedNonWfhWeekdays++
             }
         }
     }
 
-    val percent = if (totalWeekdays == 0) 0
-    else (nonWfhWeekdays * 100) / totalWeekdays
+    val actualPercent = if (totalWeekdays == 0) 0
+    else (actualNonWfhWeekdays * 100) / totalWeekdays
+
+    val plannedPercent = if (totalWeekdays == 0) 0
+    else (plannedNonWfhWeekdays * 100) / totalWeekdays
 
     return MonthStats(
-        nonWfhPercent = percent,
-        baseCount = baseCount,
+        actualNonWfhPercent = actualPercent,
+        actualBaseCount = actualBaseCount,
+        plannedNonWfhPercent = plannedPercent,
+        plannedBaseCount = plannedBaseCount,
         totalDays = totalWeekdays
     )
 }
@@ -65,7 +80,7 @@ fun calculateInsights(
 
     for (day in 1..daysInMonth) {
 
-        val key = "${month.year}-${month.monthValue}-%02d".format(day)
+        val key = "%d-%02d-%02d".format(month.year, month.monthValue, day)
         val dayState = data[key] ?: DayState()
         val state = dayState.actual
 

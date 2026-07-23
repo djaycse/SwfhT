@@ -9,7 +9,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import net.qs.swfht.data.WorkDataStore
+import net.qs.swfht.worker.LocationWorker
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -18,6 +22,7 @@ fun WifiSettingsScreen(
     store: WorkDataStore,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val currentSsid by store.wifiSsid.collectAsState(initial = "TRANSPORT GUEST")
     val currentInterval by store.pollIntervalMinutes.collectAsState(initial = 30L)
@@ -81,6 +86,11 @@ fun WifiSettingsScreen(
                         store.saveWifiSsid(ssidValue)
                         val interval = intervalValue.toLongOrNull() ?: 30L
                         store.savePollInterval(if (interval < 15) 15 else interval) // WorkManager min is 15
+                        
+                        // Trigger immediate scan
+                        val workRequest = OneTimeWorkRequestBuilder<LocationWorker>().build()
+                        WorkManager.getInstance(context).enqueue(workRequest)
+                        
                         onBack()
                     }
                 },

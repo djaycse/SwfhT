@@ -4,14 +4,22 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
+import android.os.Build
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Tasks
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import net.qs.swfht.DayState
+import net.qs.swfht.WorkLocation
 import net.qs.swfht.data.WorkDataStore
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -21,23 +29,45 @@ class LocationWorker(context: Context, params: WorkerParameters) : CoroutineWork
 
     override suspend fun doWork(): Result {
         val store = WorkDataStore(applicationContext)
+
         val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val connectivityManager = applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
         // Check for necessary permissions
         if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return Result.failure()
         }
 
-        // Try to see if we are currently connected to the target wifi or if it's in scan results
+        // Try to see if we are currently connected to the target wifi
+        val currentSsid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val activeNetwork = connectivityManager.activeNetwork
+            val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
+            val transportInfo = capabilities?.transportInfo
+            if (transportInfo is WifiInfo) {
+                transportInfo.ssid?.removeSurrounding("\"")
+            } else {
+                null
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            wifiManager.connectionInfo?.ssid?.removeSurrounding("\"")
+        }
+
         val wifiSsid = store.wifiSsid.first()
-        val connectionInfo = wifiManager.connectionInfo
-        val currentSsid = connectionInfo.ssid.removeSurrounding("\"")
         
+        // Check if currently connected or if it's in scan results
         val isAtWorkWifi = if (currentSsid == wifiSsid) {
             true
         } else {
             val scanResults = try { wifiManager.scanResults } catch (e: Exception) { emptyList() }
-            scanResults.any { it.SSID.removeSurrounding("\"") == wifiSsid }
+            scanResults.any { result ->
+                val ssid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    result.wifiSsid?.toString()?.removeSurrounding("\"")
+                } else {
+                    result.SSID?.removeSurrounding("\"")
+                }
+                ssid == wifiSsid
+            }
         }
 
         if (!isAtWorkWifi) {
@@ -57,16 +87,19 @@ class LocationWorker(context: Context, params: WorkerParameters) : CoroutineWork
 
         val officeLocations = store.officeLocations.first()
         val match = officeLocations.find { office ->
-            calculateDistance(currentLocation.latitude, currentLocation.longitude, office.lat, office.lng) <= 200
+            calculateDistance(currentLocation.latitude, currentLocation.longitude, office.lat, office.lng) <= 50
         }
 
         if (match != null) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(applicationContext, "Detected you are in location ${match.name}", Toast.LENGTH_SHORT).show()
+            }
             val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
             val currentMap = store.workMap.first()
             val currentState = currentMap[today] ?: DayState()
             
-            if (currentState.actual != match.type) {
-                store.save(today, currentState.copy(actual = match.type))
+            if (currentState.actual != match.type || currentState.locationName != match.name) {
+                store.save(today, currentState.copy(actual = match.type, locationName = match.name))
             }
         }
 

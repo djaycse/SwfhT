@@ -22,12 +22,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.qs.swfht.data.WorkDataStore
+import net.qs.swfht.worker.LocationWorker
 
 // UI-specific model to handle text input smoothly
 private data class OfficeLocationUI(
@@ -85,6 +88,11 @@ fun OfficeLocationsScreen(
                         }
                         scope.launch {
                             store.saveOfficeLocations(finalLocations)
+                            
+                            // Trigger immediate scan
+                            val workRequest = OneTimeWorkRequestBuilder<LocationWorker>().build()
+                            WorkManager.getInstance(context).enqueue(workRequest)
+                            
                             onBack()
                         }
                     }) {

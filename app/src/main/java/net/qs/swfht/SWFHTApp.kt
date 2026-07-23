@@ -19,6 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
@@ -51,16 +53,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import net.qs.swfht.data.WorkDataStore
 import net.qs.swfht.worker.LocationWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.compose.runtime.LaunchedEffect
 import java.time.Duration
+import java.time.LocalDate
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,6 +95,12 @@ fun SWFHTApp() {
             ExistingPeriodicWorkPolicy.UPDATE,
             workRequest
         )
+    }
+
+    LaunchedEffect(Unit) {
+        // Trigger a one-time scan on app launch
+        val workRequest = OneTimeWorkRequestBuilder<LocationWorker>().build()
+        WorkManager.getInstance(context).enqueue(workRequest)
     }
 
     if (showOfficeLocations) {
@@ -198,150 +210,194 @@ fun SWFHTApp() {
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
         ) {
-
-            MonthHeader(
-                month = currentMonth,
-                onPrev = { currentMonth = currentMonth.minusMonths(1) },
-                onNext = { currentMonth = currentMonth.plusMonths(1) }
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-            var totalDrag by remember { mutableFloatStateOf(0f) }
-
-            Box(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .pointerInput(currentMonth) {
-                        detectHorizontalDragGestures(
-                            onDragStart = { totalDrag = 0f },
-                            onDragEnd = {
-                                if (totalDrag > 100) {
-                                    currentMonth = currentMonth.minusMonths(1)
-                                } else if (totalDrag < -100) {
-                                    currentMonth = currentMonth.plusMonths(1)
-                                }
-                            },
-                            onHorizontalDrag = { change, dragAmount ->
-                                change.consume()
-                                totalDrag += dragAmount
-                            }
-                        )
-                    }
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                CalendarGrid(
+
+                Spacer(Modifier.height(16.dp))
+
+                MonthHeader(
                     month = currentMonth,
-                    dayStates = dayStates,
-                    scope = scope,
-                    store = store
+                    onPrev = { currentMonth = currentMonth.minusMonths(1) },
+                    onNext = { currentMonth = currentMonth.plusMonths(1) }
                 )
+
+                Spacer(Modifier.height(4.dp))
+
+                var totalDrag by remember { mutableFloatStateOf(0f) }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pointerInput(currentMonth) {
+                            detectHorizontalDragGestures(
+                                onDragStart = { totalDrag = 0f },
+                                onDragEnd = {
+                                    if (totalDrag > 100) {
+                                        currentMonth = currentMonth.minusMonths(1)
+                                    } else if (totalDrag < -100) {
+                                        currentMonth = currentMonth.plusMonths(1)
+                                    }
+                                },
+                                onHorizontalDrag = { change, dragAmount ->
+                                    change.consume()
+                                    totalDrag += dragAmount
+                                }
+                            )
+                        }
+                ) {
+                    CalendarGrid(
+                        month = currentMonth,
+                        dayStates = dayStates,
+                        scope = scope,
+                        store = store
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
             }
 
-            Spacer(Modifier.height(4.dp))
-
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            Modifier
-                                .size(12.dp)
-                                .background(Color(0xFFFFA500))
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text("Team Hub", style = MaterialTheme.typography.bodySmall)
-
-                        Spacer(Modifier.width(16.dp))
-
-                        Box(
-                            Modifier
-                                .size(12.dp)
-                                .background(Color(0xFF4CAF50))
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text("Other Office", style = MaterialTheme.typography.bodySmall)
-
-                        Spacer(Modifier.width(16.dp))
-
-                        Box(
-                            Modifier
-                                .size(12.dp)
-                                .border(1.5.dp, MaterialTheme.colorScheme.onSurface)
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text("WFH", style = MaterialTheme.typography.bodySmall)
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            Modifier
-                                .size(12.dp)
-                                .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text("Planned (Tap)", style = MaterialTheme.typography.bodySmall)
-
-                        Spacer(Modifier.width(16.dp))
-
-                        Box(
-                            Modifier
-                                .size(12.dp)
-                                .border(1.5.dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text("Actual (Long Press)", style = MaterialTheme.typography.bodySmall)
+            Column(
+                modifier = Modifier
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val todayStr = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+                val todayState = dayStates[todayStr] ?: DayState()
+                val locationText = if (!todayState.locationName.isNullOrEmpty()) {
+                    todayState.locationName
+                } else {
+                    when (todayState.actual) {
+                        WorkLocation.BASE -> "Team hub"
+                        WorkLocation.OTHER -> "Other office"
+                        else -> "Not in an office"
                     }
                 }
-            }
 
-            Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Currently detected location: $locationText",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp)
+                )
 
-            val stats = calculateStats(currentMonth, dayStates)
-
-            Card {
-                Column(Modifier.padding(12.dp)) {
-
-                    LinearProgressIndicator(
-                        progress = { (stats.nonWfhPercent / 50f).coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("In office: ${stats.nonWfhPercent}%")
-                            if (stats.nonWfhPercent >= 50) {
-                                Text(
-                                    "✔ 50% met",
-                                    color = Color(0xFF2E7D32),
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                Modifier
+                                    .size(12.dp)
+                                    .background(Color(0xFFFFA500))
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text("Team Hub", style = MaterialTheme.typography.bodySmall)
+
+                            Spacer(Modifier.width(16.dp))
+
+                            Box(
+                                Modifier
+                                    .size(12.dp)
+                                    .background(Color(0xFF4CAF50))
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text("Other Office", style = MaterialTheme.typography.bodySmall)
+
+                            Spacer(Modifier.width(16.dp))
+
+                            Box(
+                                Modifier
+                                    .size(12.dp)
+                                    .border(1.5.dp, MaterialTheme.colorScheme.onSurface)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text("WFH", style = MaterialTheme.typography.bodySmall)
                         }
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            val teamHubLabel = if (stats.baseCount == 1) "day" else "days"
-                            Text("Team hub: ${stats.baseCount} $teamHubLabel")
-                            if (stats.baseCount >= 5) {
-                                Text(
-                                    "✔ 5 days met",
-                                    color = Color(0xFF2E7D32),
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
+                        Text(
+                            "Circles: Inner=Plan (tap), Outer=Actual (hold)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                val stats = calculateStats(currentMonth, dayStates)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Left Card: In office
+                    Card(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier.padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                "In office",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            // Planned Row
+                            StatRow(
+                                label = "Plan",
+                                value = stats.plannedNonWfhPercent,
+                                goal = 50,
+                                isPercent = true
+                            )
+
+                            // Actual Row
+                            StatRow(
+                                label = "Actual",
+                                value = stats.actualNonWfhPercent,
+                                goal = 50,
+                                isPercent = true
+                            )
+                        }
+                    }
+
+                    // Right Card: Team hub
+                    Card(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier.padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                "Team hub",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            // Planned Row
+                            StatRow(
+                                label = "Plan",
+                                value = stats.plannedBaseCount,
+                                goal = 5,
+                                isPercent = false
+                            )
+
+                            // Actual Row
+                            StatRow(
+                                label = "Actual",
+                                value = stats.actualBaseCount,
+                                goal = 5,
+                                isPercent = false
+                            )
                         }
                     }
                 }
@@ -415,6 +471,51 @@ fun SWFHTApp() {
                     Text("Close")
                 }
             }
+        )
+    }
+}
+
+@Composable
+fun StatRow(
+    label: String,
+    value: Int,
+    goal: Int,
+    isPercent: Boolean
+) {
+    val progress = (value.toFloat() / goal.toFloat()).coerceIn(0f, 1f)
+    val isMet = progress >= 1f
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Icon(
+            imageVector = if (isMet) Icons.Default.Check else Icons.Default.Close,
+            contentDescription = null,
+            tint = if (isMet) Color(0xFF2E7D32) else Color.Red,
+            modifier = Modifier.size(14.dp)
+        )
+
+        Spacer(Modifier.width(4.dp))
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.width(45.dp)
+        )
+
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .weight(1f)
+                .height(4.dp)
+                .padding(horizontal = 4.dp)
+        )
+
+        Text(
+            text = if (isPercent) "$value%" else "$value/$goal",
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.width(30.dp)
         )
     }
 }
