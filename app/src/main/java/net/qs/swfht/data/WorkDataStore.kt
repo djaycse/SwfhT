@@ -145,7 +145,7 @@ class WorkDataStore(private val context: Context) {
 
     val wifiSsid: Flow<String> =
         context.dataStore.data.map { prefs ->
-            prefs[KEY_WIFI_SSID] ?: "TRANSPORT"
+            prefs[KEY_WIFI_SSID] ?: "YOUR_OFFICE"
         }
 
     suspend fun saveWifiSsid(ssid: String) {
