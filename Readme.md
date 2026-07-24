@@ -13,6 +13,9 @@ SwfhT is a lightweight Android application designed to help employees track thei
 
 ## Changelog
 
+### Version 1.2.2
+*   **Bug-fix**: Version string again not updated in UI (D'oh!).
+
 ### Version 1.2.1
 *   **Bug-fix**: Version string was not updated in UI.
 
