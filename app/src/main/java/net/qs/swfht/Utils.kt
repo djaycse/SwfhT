@@ -2,6 +2,7 @@ package net.qs.swfht
 
 import androidx.compose.ui.graphics.Color
 import java.time.YearMonth
+import kotlin.math.roundToInt
 
 fun colorFor(state: WorkLocation): Color {
     return when (state) {
@@ -54,10 +55,10 @@ fun calculateStats(
     }
 
     val actualPercent = if (totalWeekdays == 0) 0
-    else (actualNonWfhWeekdays * 100) / totalWeekdays
+    else ((actualNonWfhWeekdays * 100.0) / totalWeekdays).roundToInt()
 
     val plannedPercent = if (totalWeekdays == 0) 0
-    else (plannedNonWfhWeekdays * 100) / totalWeekdays
+    else ((plannedNonWfhWeekdays * 100.0) / totalWeekdays).roundToInt()
 
     return MonthStats(
         actualNonWfhPercent = actualPercent,

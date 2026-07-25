@@ -203,7 +203,7 @@ fun OfficeLocationsScreen(
                                             }
                                         }
                                     )
-                                    Text("Team Hub")
+                                    Text("Team hub")
                                     Spacer(Modifier.width(8.dp))
                                     RadioButton(
                                         selected = location.type == WorkLocation.OTHER,
@@ -213,7 +213,7 @@ fun OfficeLocationsScreen(
                                             }
                                         }
                                     )
-                                    Text("Other Office")
+                                    Text("Other office")
                                 }
 
                                 Button(

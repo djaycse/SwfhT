@@ -43,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -322,7 +323,7 @@ fun SWFHTApp() {
                                     .background(Color(0xFFFFA500))
                             )
                             Spacer(Modifier.width(4.dp))
-                            Text("Team Hub", style = MaterialTheme.typography.bodySmall)
+                            Text("Team hub", style = MaterialTheme.typography.bodySmall)
 
                             Spacer(Modifier.width(16.dp))
 
@@ -332,14 +333,16 @@ fun SWFHTApp() {
                                     .background(Color(0xFF4CAF50))
                             )
                             Spacer(Modifier.width(4.dp))
-                            Text("Other Office", style = MaterialTheme.typography.bodySmall)
+                            Text("Other office", style = MaterialTheme.typography.bodySmall)
 
                             Spacer(Modifier.width(16.dp))
 
+                            val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+                            val dayOffColor = if (isDark) net.qs.swfht.ui.theme.DayOffDark else net.qs.swfht.ui.theme.DayOffLight
                             Box(
                                 Modifier
                                     .size(12.dp)
-                                    .background(MaterialTheme.colorScheme.onSurface)
+                                    .background(dayOffColor)
                             )
                             Spacer(Modifier.width(4.dp))
                             Text("Day off", style = MaterialTheme.typography.bodySmall)
@@ -380,7 +383,7 @@ fun SWFHTApp() {
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                "In office ($goalPercent% req.)",
+                                "In office ($goalPercent%)",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -410,7 +413,7 @@ fun SWFHTApp() {
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                "Team hub ($goalDays days req.)",
+                                "Team hub ($goalDays days)",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -527,7 +530,9 @@ fun StatRow(
             modifier = Modifier
                 .weight(1f)
                 .height(4.dp)
-                .padding(horizontal = 4.dp)
+                .padding(horizontal = 4.dp),
+            strokeCap = StrokeCap.Butt,
+            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
         )
 
         Text(

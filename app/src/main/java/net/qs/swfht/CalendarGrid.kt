@@ -87,11 +87,16 @@ fun CalendarGrid(
                         if (valid) {
                             val isWeekend = col == 5 || col == 6
                             val isLeave = dayState.planned == WorkLocation.LEAVE
+                            val isDayOff = isWeekend || isLeave
+                            val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+                            val dayOffColor = if (isDark) net.qs.swfht.ui.theme.DayOffDark else net.qs.swfht.ui.theme.DayOffLight
+                            val onDayOffColor = if (isDark) Color.White else Color.Black
+
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .background(
-                                        if (isWeekend || isLeave) MaterialTheme.colorScheme.onSurface
+                                        if (isDayOff) dayOffColor
                                         else Color.Transparent
                                     )
                                     // Today highlight: full size themed border
@@ -147,7 +152,7 @@ fun CalendarGrid(
 
                                 Text(
                                     text = dayNumber.toString(),
-                                    color = if (isWeekend || isLeave) MaterialTheme.colorScheme.surface
+                                    color = if (isDayOff) onDayOffColor
                                     else if (dayState.planned == WorkLocation.HOME) MaterialTheme.colorScheme.onSurface
                                     else Color.Black
                                 )
