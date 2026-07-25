@@ -66,6 +66,14 @@ android {
     }
 }
 
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("SwfhT-$vName.apk")
+        }
+    }
+}
+
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
