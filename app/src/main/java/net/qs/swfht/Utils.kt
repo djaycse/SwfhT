@@ -8,6 +8,7 @@ fun colorFor(state: WorkLocation): Color {
         WorkLocation.HOME -> Color.Transparent
         WorkLocation.BASE -> Color(0xFFFFA500)
         WorkLocation.OTHER -> Color(0xFF4CAF50)
+        WorkLocation.LEAVE -> Color.Transparent
     }
 }
 
@@ -41,9 +42,9 @@ fun calculateStats(
             plannedBaseCount++
         }
 
-        if (isWeekday) {
+        if (isWeekday && dayState.planned != WorkLocation.LEAVE) {
             totalWeekdays++
-            if (dayState.actual != WorkLocation.HOME) {
+            if (dayState.actual != WorkLocation.HOME && dayState.actual != WorkLocation.LEAVE) {
                 actualNonWfhWeekdays++
             }
             if (dayState.planned != WorkLocation.HOME) {
@@ -84,7 +85,7 @@ fun calculateInsights(
         val dayState = data[key] ?: DayState()
         val state = dayState.actual
 
-        val isOffice = state != WorkLocation.HOME
+        val isOffice = state != WorkLocation.HOME && state != WorkLocation.LEAVE
 
         if (isOffice) {
             temp++

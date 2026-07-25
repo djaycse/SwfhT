@@ -1,6 +1,7 @@
 package net.qs.swfht
 
 import android.widget.ImageView
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -19,19 +20,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -41,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -56,18 +59,16 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import net.qs.swfht.data.WorkDataStore
-import net.qs.swfht.worker.LocationWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.compose.runtime.LaunchedEffect
+import net.qs.swfht.data.WorkDataStore
+import net.qs.swfht.worker.LocationWorker
 import java.time.Duration
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +79,7 @@ fun SWFHTApp() {
     var showAbout by remember { mutableStateOf(false) }
     var showOfficeLocations by remember { mutableStateOf(false) }
     var showWifiSettings by remember { mutableStateOf(false) }
+    var showGoalSettings by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
 
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -86,6 +88,8 @@ fun SWFHTApp() {
 
     val savedMap by store.workMap.collectAsState(initial = emptyMap())
     val pollInterval by store.pollIntervalMinutes.collectAsState(initial = 30L)
+    val goalPercent by store.goalOfficePercent.collectAsState(initial = 50)
+    val goalDays by store.goalTeamHubDays.collectAsState(initial = 5)
 
     LaunchedEffect(pollInterval) {
         val workRequest = PeriodicWorkRequestBuilder<LocationWorker>(Duration.ofMinutes(pollInterval))
@@ -104,6 +108,7 @@ fun SWFHTApp() {
     }
 
     if (showOfficeLocations) {
+        BackHandler { showOfficeLocations = false }
         OfficeLocationsScreen(
             store = store,
             onBack = { showOfficeLocations = false }
@@ -112,9 +117,19 @@ fun SWFHTApp() {
     }
 
     if (showWifiSettings) {
+        BackHandler { showWifiSettings = false }
         WifiSettingsScreen(
             store = store,
             onBack = { showWifiSettings = false }
+        )
+        return
+    }
+
+    if (showGoalSettings) {
+        BackHandler { showGoalSettings = false }
+        GoalSettingsScreen(
+            store = store,
+            onBack = { showGoalSettings = false }
         )
         return
     }
@@ -167,7 +182,7 @@ fun SWFHTApp() {
                                     showHelp = true
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Help, contentDescription = null)
+                                    Icon(Icons.AutoMirrored.Filled.Help, contentDescription = null)
                                 }
                             )
                             DropdownMenuItem(
@@ -188,6 +203,16 @@ fun SWFHTApp() {
                                 },
                                 leadingIcon = {
                                     Icon(Icons.Default.Wifi, contentDescription = null)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Attendance Goals") },
+                                onClick = {
+                                    menuExpanded = false
+                                    showGoalSettings = true
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Settings, contentDescription = null)
                                 }
                             )
                             DropdownMenuItem(
@@ -269,25 +294,18 @@ fun SWFHTApp() {
             ) {
                 val todayStr = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
                 val todayState = dayStates[todayStr] ?: DayState()
-                val locationText = if (!todayState.locationName.isNullOrEmpty()) {
-                    todayState.locationName
-                } else {
-                    when (todayState.actual) {
-                        WorkLocation.BASE -> "Team hub"
-                        WorkLocation.OTHER -> "Other office"
-                        else -> "Not in an office"
-                    }
+                
+                if (!todayState.locationName.isNullOrEmpty()) {
+                    Text(
+                        text = "Currently at ${todayState.locationName}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp)
+                    )
                 }
-
-                Text(
-                    text = "Currently detected location: $locationText",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp)
-                )
 
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(
@@ -321,17 +339,31 @@ fun SWFHTApp() {
                             Box(
                                 Modifier
                                     .size(12.dp)
-                                    .border(1.5.dp, MaterialTheme.colorScheme.onSurface)
+                                    .background(MaterialTheme.colorScheme.onSurface)
                             )
                             Spacer(Modifier.width(4.dp))
-                            Text("WFH", style = MaterialTheme.typography.bodySmall)
+                            Text("Day off", style = MaterialTheme.typography.bodySmall)
                         }
 
-                        Text(
-                            "Circles: Inner=Plan (tap), Outer=Actual (hold)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                Modifier
+                                    .size(12.dp)
+                                    .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text("Plan", style = MaterialTheme.typography.bodySmall)
+
+                            Spacer(Modifier.width(16.dp))
+
+                            Box(
+                                Modifier
+                                    .size(12.dp)
+                                    .border(2.dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text("Actual", style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
 
@@ -348,7 +380,7 @@ fun SWFHTApp() {
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                "In office",
+                                "In office ($goalPercent% req.)",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -357,7 +389,7 @@ fun SWFHTApp() {
                             StatRow(
                                 label = "Plan",
                                 value = stats.plannedNonWfhPercent,
-                                goal = 50,
+                                goal = goalPercent,
                                 isPercent = true
                             )
 
@@ -365,7 +397,7 @@ fun SWFHTApp() {
                             StatRow(
                                 label = "Actual",
                                 value = stats.actualNonWfhPercent,
-                                goal = 50,
+                                goal = goalPercent,
                                 isPercent = true
                             )
                         }
@@ -378,7 +410,7 @@ fun SWFHTApp() {
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                "Team hub",
+                                "Team hub ($goalDays days req.)",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -387,7 +419,7 @@ fun SWFHTApp() {
                             StatRow(
                                 label = "Plan",
                                 value = stats.plannedBaseCount,
-                                goal = 5,
+                                goal = goalDays,
                                 isPercent = false
                             )
 
@@ -395,7 +427,7 @@ fun SWFHTApp() {
                             StatRow(
                                 label = "Actual",
                                 value = stats.actualBaseCount,
-                                goal = 5,
+                                goal = goalDays,
                                 isPercent = false
                             )
                         }
@@ -410,39 +442,25 @@ fun SWFHTApp() {
             onDismissRequest = { showHelp = false },
             title = { Text("How to use") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Tap a date to toggle PLANNED state (Filled Circle).")
-                    Text("Press and Hold a date to toggle ACTUAL state (Border Box).")
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Tap a date to set your plan for that day:", style = MaterialTheme.typography.titleSmall)
+                    Text("- Tap once: plan to work from team hub (orange)")
+                    Text("- Tap again: plan to work from another office (green)")
+                    Text("- Tap again: plan to take leave")
+                    Text("- Tap again: plan to work from home")
+                    Text("- Tap again: repeat the above")
                     
-                    HorizontalDivider()
+                    Spacer(Modifier.height(8.dp))
                     
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            Modifier
-                                .size(16.dp)
-                                .background(Color(0xFFFFA500), CircleShape)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("Team Hub (Orange)")
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            Modifier
-                                .size(16.dp)
-                                .background(Color(0xFF4CAF50), CircleShape)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("Other Office (Green)")
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            Modifier
-                                .size(16.dp)
-                                .border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("WFH (No colour)")
-                    }
+                    Text("Tap and hold a date to set actual office attendance for that day:", style = MaterialTheme.typography.titleSmall)
+                    Text("- Hold once: worked at team hub (orange)")
+                    Text("- Hold again: worked at another office (green)")
+                    Text("- Hold again: worked from home")
+                    Text("- Hold again: repeat the above")
+                    
+                    Spacer(Modifier.height(8.dp))
+                    
+                    Text("Verify your plan vs actual statistics in the bottom sections.", style = MaterialTheme.typography.bodyMedium)
                 }
             },
             confirmButton = {
@@ -513,7 +531,7 @@ fun StatRow(
         )
 
         Text(
-            text = if (isPercent) "$value%" else "$value/$goal",
+            text = if (isPercent) "$value%" else "$value",
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.width(30.dp)
         )

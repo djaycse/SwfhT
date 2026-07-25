@@ -20,6 +20,8 @@ class WorkDataStore(private val context: Context) {
         private val KEY_OFFICE_LOCATIONS = stringPreferencesKey("office_locations")
         private val KEY_WIFI_SSID = stringPreferencesKey("wifi_ssid")
         private val KEY_POLL_INTERVAL = stringPreferencesKey("poll_interval")
+        private val KEY_GOAL_OFFICE_PERCENT = stringPreferencesKey("goal_office_percent")
+        private val KEY_GOAL_TEAM_HUB_DAYS = stringPreferencesKey("goal_team_hub_days")
     }
 
     // Read full map
@@ -162,6 +164,28 @@ class WorkDataStore(private val context: Context) {
     suspend fun savePollInterval(minutes: Long) {
         context.dataStore.edit { prefs ->
             prefs[KEY_POLL_INTERVAL] = minutes.toString()
+        }
+    }
+
+    val goalOfficePercent: Flow<Int> =
+        context.dataStore.data.map { prefs ->
+            prefs[KEY_GOAL_OFFICE_PERCENT]?.toIntOrNull() ?: 50
+        }
+
+    suspend fun saveGoalOfficePercent(percent: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_GOAL_OFFICE_PERCENT] = percent.toString()
+        }
+    }
+
+    val goalTeamHubDays: Flow<Int> =
+        context.dataStore.data.map { prefs ->
+            prefs[KEY_GOAL_TEAM_HUB_DAYS]?.toIntOrNull() ?: 5
+        }
+
+    suspend fun saveGoalTeamHubDays(days: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_GOAL_TEAM_HUB_DAYS] = days.toString()
         }
     }
 }

@@ -3,7 +3,8 @@ package net.qs.swfht
 enum class WorkLocation {
     HOME,
     BASE,
-    OTHER
+    OTHER,
+    LEAVE
 }
 
 data class DayState(

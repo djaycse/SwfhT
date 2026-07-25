@@ -13,6 +13,16 @@ SwfhT is a lightweight Android application designed to help employees track thei
 
 ## Changelog
 
+### Version 1.3.0
+*   **New Feature: Attendance Goals**: Requirements (50% office, 5 days Team Hub) are now fully configurable via a new settings screen.
+*   **New State: Leave Tracking**: Added a "Leave" option to the location toggle. Leave days are visually distinguished and automatically excluded from attendance percentage and streak calculations.
+*   **UI & UX Refinement**:
+    *   **High-Contrast Calendar**: Weekends and leave days are now highlighted with high-contrast backgrounds (Black in light theme, White in dark theme) for better visibility.
+    *   **Simplified Office Locations**: Combined Latitude and Longitude into a single field with flexible parsing and improved keyboard visibility.
+    *   **Improved Navigation**: Added system back button handling for all settings screens to return to the dashboard instead of closing the app.
+    *   **Legend & Instructions Update**: Redesigned the legend and updated "How to Use" for better clarity and consistent visual language.
+    *   **Smart Detection Display**: The "Currently at" label now only shows when a known office has been auto-detected.
+
 ### Version 1.2.2
 *   **Bug-fix**: Version string again not updated in UI (D'oh!).
 

@@ -85,10 +85,15 @@ fun CalendarGrid(
                     ) {
 
                         if (valid) {
-
+                            val isWeekend = col == 5 || col == 6
+                            val isLeave = dayState.planned == WorkLocation.LEAVE
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
+                                    .background(
+                                        if (isWeekend || isLeave) MaterialTheme.colorScheme.onSurface
+                                        else Color.Transparent
+                                    )
                                     // Today highlight: full size themed border
                                     .border(
                                         width = if (isToday) 2.dp else 0.dp,
@@ -101,7 +106,8 @@ fun CalendarGrid(
                                             val nextPlanned = when (dayState.planned) {
                                                 WorkLocation.HOME -> WorkLocation.BASE
                                                 WorkLocation.BASE -> WorkLocation.OTHER
-                                                WorkLocation.OTHER -> WorkLocation.HOME
+                                                WorkLocation.OTHER -> WorkLocation.LEAVE
+                                                WorkLocation.LEAVE -> WorkLocation.HOME
                                             }
                                             val newState = dayState.copy(planned = nextPlanned)
                                             updateState(dateKey, newState, dayStates, scope, store)
@@ -111,6 +117,7 @@ fun CalendarGrid(
                                                 WorkLocation.HOME -> WorkLocation.BASE
                                                 WorkLocation.BASE -> WorkLocation.OTHER
                                                 WorkLocation.OTHER -> WorkLocation.HOME
+                                                WorkLocation.LEAVE -> WorkLocation.HOME // Keep actual simple for now
                                             }
                                             val newState = dayState.copy(actual = nextActual)
                                             updateState(dateKey, newState, dayStates, scope, store)
@@ -119,7 +126,7 @@ fun CalendarGrid(
                                 contentAlignment = Alignment.Center
                             ) {
                                 // Planned state: Filled circle (Inner)
-                                if (dayState.planned != WorkLocation.HOME) {
+                                if (dayState.planned != WorkLocation.HOME && dayState.planned != WorkLocation.LEAVE) {
                                     Box(
                                         modifier = Modifier
                                             .fillMaxSize()
@@ -129,7 +136,7 @@ fun CalendarGrid(
                                 }
 
                                 // Actual state: Circle border (Outer)
-                                if (dayState.actual != WorkLocation.HOME) {
+                                if (dayState.actual != WorkLocation.HOME && dayState.actual != WorkLocation.LEAVE) {
                                     Box(
                                         modifier = Modifier
                                             .fillMaxSize()
@@ -140,7 +147,9 @@ fun CalendarGrid(
 
                                 Text(
                                     text = dayNumber.toString(),
-                                    color = if (dayState.planned == WorkLocation.HOME) MaterialTheme.colorScheme.onSurface else Color.Black
+                                    color = if (isWeekend || isLeave) MaterialTheme.colorScheme.surface
+                                    else if (dayState.planned == WorkLocation.HOME) MaterialTheme.colorScheme.onSurface
+                                    else Color.Black
                                 )
                             }
                         }

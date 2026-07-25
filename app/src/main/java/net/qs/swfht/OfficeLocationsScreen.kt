@@ -4,22 +4,49 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.work.OneTimeWorkRequestBuilder
@@ -35,8 +62,7 @@ import net.qs.swfht.worker.LocationWorker
 // UI-specific model to handle text input smoothly
 private data class OfficeLocationUI(
     val name: String,
-    val latStr: String,
-    val lngStr: String,
+    val coords: String,
     val type: WorkLocation
 )
 
@@ -56,7 +82,7 @@ fun OfficeLocationsScreen(
     LaunchedEffect(savedLocations) {
         if (!hasLoadedInitial && savedLocations != null) {
             editableLocations = savedLocations!!.map { 
-                OfficeLocationUI(it.name, it.lat.toString(), it.lng.toString(), it.type) 
+                OfficeLocationUI(it.name, "${it.lat}, ${it.lng}", it.type) 
             }
             hasLoadedInitial = true
         }
@@ -68,6 +94,7 @@ fun OfficeLocationsScreen(
     ) { _ -> }
 
     Scaffold(
+        modifier = Modifier.imePadding(),
         topBar = {
             TopAppBar(
                 title = { Text("Office Locations") },
@@ -79,10 +106,13 @@ fun OfficeLocationsScreen(
                 actions = {
                     IconButton(onClick = {
                         val finalLocations = editableLocations.map {
+                            val parts = it.coords.split(",")
+                            val lat = parts.getOrNull(0)?.trim()?.toDoubleOrNull() ?: 0.0
+                            val lng = parts.getOrNull(1)?.trim()?.toDoubleOrNull() ?: 0.0
                             OfficeLocation(
                                 name = it.name,
-                                lat = it.latStr.toDoubleOrNull() ?: 0.0,
-                                lng = it.lngStr.toDoubleOrNull() ?: 0.0,
+                                lat = lat,
+                                lng = lng,
                                 type = it.type
                             )
                         }
@@ -104,7 +134,7 @@ fun OfficeLocationsScreen(
         floatingActionButton = {
             if (editableLocations.size < 5) {
                 FloatingActionButton(onClick = {
-                    editableLocations = editableLocations + OfficeLocationUI("New Location", "0.0", "0.0", WorkLocation.BASE)
+                    editableLocations = editableLocations + OfficeLocationUI("New Location", "0.0, 0.0", WorkLocation.BASE)
                 }) {
                     Icon(Icons.Default.Add, contentDescription = "Add Location")
                 }
@@ -151,28 +181,18 @@ fun OfficeLocationsScreen(
                                 Spacer(Modifier.height(8.dp))
 
                                 OutlinedTextField(
-                                    value = location.latStr,
+                                    value = location.coords,
                                     onValueChange = { newVal ->
                                         editableLocations = editableLocations.toMutableList().apply {
-                                            this[index] = location.copy(latStr = newVal)
+                                            this[index] = location.copy(coords = newVal)
                                         }
                                     },
-                                    label = { Text("Latitude") },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                    label = { Text("Coordinates (Lat, Long)") },
+                                    placeholder = { Text("e.g. -33.86, 151.20") },
+                                    modifier = Modifier.fillMaxWidth()
                                 )
 
-                                OutlinedTextField(
-                                    value = location.lngStr,
-                                    onValueChange = { newVal ->
-                                        editableLocations = editableLocations.toMutableList().apply {
-                                            this[index] = location.copy(lngStr = newVal)
-                                        }
-                                    },
-                                    label = { Text("Longitude") },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                                )
+                                Spacer(Modifier.height(8.dp))
 
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     RadioButton(
@@ -207,8 +227,7 @@ fun OfficeLocationsScreen(
                                                 loc?.let {
                                                     editableLocations = editableLocations.toMutableList().apply {
                                                         this[index] = location.copy(
-                                                            latStr = it.latitude.toString(),
-                                                            lngStr = it.longitude.toString()
+                                                            coords = "${it.latitude}, ${it.longitude}"
                                                         )
                                                     }
                                                 }
