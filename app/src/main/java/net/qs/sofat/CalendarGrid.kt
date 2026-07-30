@@ -1,4 +1,4 @@
-package net.qs.swfht
+package net.qs.sofat
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import net.qs.swfht.data.WorkDataStore
+import net.qs.sofat.data.WorkDataStore
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -89,7 +89,7 @@ fun CalendarGrid(
                             val isLeave = dayState.planned == WorkLocation.LEAVE
                             val isDayOff = isWeekend || isLeave
                             val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-                            val dayOffColor = if (isDark) net.qs.swfht.ui.theme.DayOffDark else net.qs.swfht.ui.theme.DayOffLight
+                            val dayOffColor = if (isDark) net.qs.sofat.ui.theme.DayOffDark else net.qs.sofat.ui.theme.DayOffLight
                             val onDayOffColor = if (isDark) Color.White else Color.Black
 
                             Box(

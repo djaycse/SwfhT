@@ -1,4 +1,4 @@
-package net.qs.swfht
+package net.qs.sofat
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -9,31 +9,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import net.qs.swfht.data.WorkDataStore
-import net.qs.swfht.worker.LocationWorker
+import net.qs.sofat.data.WorkDataStore
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WifiSettingsScreen(
+fun GoalSettingsScreen(
     store: WorkDataStore,
     onBack: () -> Unit
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val currentSsid by store.wifiSsid.collectAsState(initial = "TRANSPORT GUEST")
-    val currentInterval by store.pollIntervalMinutes.collectAsState(initial = 30L)
+    val currentOfficePercent by store.goalOfficePercent.collectAsState(initial = 50)
+    val currentTeamHubDays by store.goalTeamHubDays.collectAsState(initial = 5)
     
-    var ssidValue by remember(currentSsid) { mutableStateOf(currentSsid) }
-    var intervalValue by remember(currentInterval) { mutableStateOf(currentInterval.toString()) }
+    var officePercentValue by remember(currentOfficePercent) { mutableStateOf(currentOfficePercent.toString()) }
+    var teamHubDaysValue by remember(currentTeamHubDays) { mutableStateOf(currentTeamHubDays.toString()) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Wi-Fi & Polling Settings") },
+                title = { Text("Attendance Goals") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -49,12 +44,12 @@ fun WifiSettingsScreen(
                 .fillMaxSize()
         ) {
             Text(
-                "Office auto-detection settings",
+                "Configure your requirements",
                 style = MaterialTheme.typography.titleMedium
             )
 
             Text(
-                "The app will periodically check if the specified office Wi-Fi network is available. If found, the app will cross-check your GPS location against any of the office locations you have configured, and automatically set whether you are in your Team hub or another office location.",
+                "Set the targets for your office attendance and team hub days. These will be used to calculate your progress on the main dashboard.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -62,18 +57,19 @@ fun WifiSettingsScreen(
             Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = ssidValue,
-                onValueChange = { ssidValue = it },
-                label = { Text("Office Wi-Fi network name (SSID)") },
-                modifier = Modifier.fillMaxWidth()
+                value = officePercentValue,
+                onValueChange = { officePercentValue = it },
+                label = { Text("Office Attendance Goal (%)") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
             Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = intervalValue,
-                onValueChange = { intervalValue = it },
-                label = { Text("Wi-Fi polling Interval (minutes)") },
+                value = teamHubDaysValue,
+                onValueChange = { teamHubDaysValue = it },
+                label = { Text("Team Hub Goal (days per month)") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
@@ -83,13 +79,11 @@ fun WifiSettingsScreen(
             Button(
                 onClick = {
                     scope.launch {
-                        store.saveWifiSsid(ssidValue)
-                        val interval = intervalValue.toLongOrNull() ?: 30L
-                        store.savePollInterval(if (interval < 15) 15 else interval) // WorkManager min is 15
+                        val percent = officePercentValue.toIntOrNull() ?: 50
+                        val days = teamHubDaysValue.toIntOrNull() ?: 5
                         
-                        // Trigger immediate scan
-                        val workRequest = OneTimeWorkRequestBuilder<LocationWorker>().build()
-                        WorkManager.getInstance(context).enqueue(workRequest)
+                        store.saveGoalOfficePercent(percent.coerceIn(0, 100))
+                        store.saveGoalTeamHubDays(days.coerceAtLeast(0))
                         
                         onBack()
                     }

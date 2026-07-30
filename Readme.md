@@ -1,6 +1,6 @@
-# SwfhT - Attendance Tracker
+# SOFAT - Office Attendance Tracker
 
-SwfhT is a lightweight Android application designed to help employees track their office attendance and ensure they meet organizational requirements. It provides a simple calendar interface to log planned and actual work locations, automatically calculating key statistics such as in-office percentage and "Team Hub" days.
+SOFAT is a lightweight Android application designed to help employees track their office attendance and ensure they meet organizational requirements. It provides a simple calendar interface to log planned and actual work locations, automatically calculating key statistics such as in-office percentage and "Team Hub" days.
 
 ## Key Features
 - **Manual Logging**: Tap to set planned work locations and long-press to set actual attendance.
@@ -12,6 +12,14 @@ SwfhT is a lightweight Android application designed to help employees track thei
 ---
 
 ## Changelog
+
+### Version 1.4.0
+*   **Major Rebranding**: Officially renamed the app from "SwfhT" to **SOFAT**. Updated all UI elements, icons, and internal naming to reflect the new identity.
+*   **Background Reliability**:
+    *   **Improved Location Fixes**: Switched to `getCurrentLocation` in the detection worker for more reliable location updates when the device is idle.
+    *   **Dynamic Status**: The "Currently at" label now clears automatically when leaving the office Wi-Fi or moving out of range, while preserving the day's attendance record.
+    *   **Notification Tuning**: Optimized toasts to only appear when first arriving at an office.
+*   **Setup Flow**: Added a dedicated UI prompt in settings to guide users through granting "Allow all the time" location permissions, essential for background auto-detection on newer Android versions.
 
 ### Version 1.3.1
 *   **Visual Polish**: Switched "Day off" highlights to a dedicated brown theme and disabled dynamic coloring to ensure a consistent brand identity regardless of device wallpaper.

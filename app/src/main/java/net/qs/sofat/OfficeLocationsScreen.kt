@@ -1,4 +1,4 @@
-package net.qs.swfht
+package net.qs.sofat
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -56,8 +56,8 @@ import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.qs.swfht.data.WorkDataStore
-import net.qs.swfht.worker.LocationWorker
+import net.qs.sofat.data.WorkDataStore
+import net.qs.sofat.worker.LocationWorker
 
 // UI-specific model to handle text input smoothly
 private data class OfficeLocationUI(

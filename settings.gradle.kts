@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SWFHT"
+rootProject.name = "SOFAT"
 include(":app")

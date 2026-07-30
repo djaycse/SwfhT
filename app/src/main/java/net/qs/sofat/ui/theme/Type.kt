@@ -1,4 +1,4 @@
-package net.qs.swfht.ui.theme
+package net.qs.sofat.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

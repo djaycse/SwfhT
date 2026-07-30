@@ -1,4 +1,4 @@
-package net.qs.swfht
+package net.qs.sofat
 
 enum class WorkLocation {
     HOME,

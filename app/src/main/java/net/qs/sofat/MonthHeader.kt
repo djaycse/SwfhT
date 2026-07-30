@@ -1,4 +1,4 @@
-package net.qs.swfht
+package net.qs.sofat
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*

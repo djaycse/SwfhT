@@ -1,4 +1,4 @@
-package net.qs.swfht.data
+package net.qs.sofat.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
@@ -6,12 +6,12 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import net.qs.swfht.DayState
-import net.qs.swfht.OfficeLocation
-import net.qs.swfht.WorkLocation
+import net.qs.sofat.DayState
+import net.qs.sofat.OfficeLocation
+import net.qs.sofat.WorkLocation
 
 // DataStore instance
-val Context.dataStore by preferencesDataStore(name = "swfht_store")
+val Context.dataStore by preferencesDataStore(name = "sofat_store")
 
 class WorkDataStore(private val context: Context) {
 

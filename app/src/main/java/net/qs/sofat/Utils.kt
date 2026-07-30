@@ -1,4 +1,4 @@
-package net.qs.swfht
+package net.qs.sofat
 
 import androidx.compose.ui.graphics.Color
 import java.time.YearMonth

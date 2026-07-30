@@ -1,11 +1,10 @@
-package net.qs.swfht.worker
+package net.qs.sofat.worker
 
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -14,13 +13,15 @@ import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import net.qs.swfht.DayState
-import net.qs.swfht.WorkLocation
-import net.qs.swfht.data.WorkDataStore
+import net.qs.sofat.DayState
+import net.qs.sofat.WorkLocation
+import net.qs.sofat.data.WorkDataStore
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.*
@@ -38,13 +39,21 @@ class LocationWorker(context: Context, params: WorkerParameters) : CoroutineWork
             return Result.failure()
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // Background location is missing. Detection will likely fail.
+                // We proceed just in case, but this is a common failure point.
+            }
+        }
+
         // Try to see if we are currently connected to the target wifi
         val currentSsid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val activeNetwork = connectivityManager.activeNetwork
             val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
             val transportInfo = capabilities?.transportInfo
             if (transportInfo is WifiInfo) {
-                transportInfo.ssid?.removeSurrounding("\"")
+                val ssid = transportInfo.ssid?.removeSurrounding("\"")
+                if (ssid == "<unknown ssid>") null else ssid
             } else {
                 null
             }
@@ -54,6 +63,9 @@ class LocationWorker(context: Context, params: WorkerParameters) : CoroutineWork
         }
 
         val wifiSsid = store.wifiSsid.first()
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val currentMap = store.workMap.first()
+        val currentState = currentMap[today] ?: DayState()
         
         // Check if currently connected or if it's in scan results
         val isAtWorkWifi = if (currentSsid == wifiSsid) {
@@ -71,12 +83,18 @@ class LocationWorker(context: Context, params: WorkerParameters) : CoroutineWork
         }
 
         if (!isAtWorkWifi) {
+            // Not at work wifi, clear current location label if it exists
+            if (!currentState.locationName.isNullOrEmpty()) {
+                store.save(today, currentState.copy(locationName = null))
+            }
             return Result.success()
         }
 
         // Found wifi, now check GPS
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(applicationContext)
-        val locationTask = fusedLocationClient.lastLocation
+        val cts = CancellationTokenSource()
+        val locationTask = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, cts.token)
+        
         val currentLocation: Location? = try {
             Tasks.await(locationTask)
         } catch (e: Exception) {
@@ -91,15 +109,28 @@ class LocationWorker(context: Context, params: WorkerParameters) : CoroutineWork
         }
 
         if (match != null) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(applicationContext, "Detected you are in location ${match.name}", Toast.LENGTH_SHORT).show()
+            // Only toast if location changed or was empty
+            if (currentState.locationName != match.name) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(applicationContext, "Detected you are in location ${match.name}", Toast.LENGTH_SHORT).show()
+                }
             }
-            val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-            val currentMap = store.workMap.first()
-            val currentState = currentMap[today] ?: DayState()
             
-            if (currentState.actual != match.type || currentState.locationName != match.name) {
-                store.save(today, currentState.copy(actual = match.type, locationName = match.name))
+            // Only update 'actual' if it's currently HOME or LEAVE.
+            // This ensures once an office state is set, it remains as is for the day.
+            val newActual = if (currentState.actual == WorkLocation.HOME || currentState.actual == WorkLocation.LEAVE) {
+                match.type
+            } else {
+                currentState.actual
+            }
+
+            if (newActual != currentState.actual || currentState.locationName != match.name) {
+                store.save(today, currentState.copy(actual = newActual, locationName = match.name))
+            }
+        } else {
+            // At work wifi but no office match, clear location name
+            if (!currentState.locationName.isNullOrEmpty()) {
+                store.save(today, currentState.copy(locationName = null))
             }
         }
 

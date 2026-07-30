@@ -14,7 +14,7 @@ val vName = versionProps.getProperty("versionName", "1.0")
 val vCode = versionProps.getProperty("versionCode", "1").toInt()
 
 android {
-    namespace = "net.qs.swfht"
+    namespace = "net.qs.sofat"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -39,7 +39,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "net.qs.swfht"
+        applicationId = "net.qs.sofat"
         minSdk = 28
         targetSdk = 36
         versionCode = vCode
@@ -69,7 +69,7 @@ android {
 androidComponents {
     onVariants(selector().withBuildType("release")) { variant ->
         variant.outputs.forEach { output ->
-            output.outputFileName.set("SwfhT-$vName.apk")
+            output.outputFileName.set("SOFAT-$vName.apk")
         }
     }
 }
