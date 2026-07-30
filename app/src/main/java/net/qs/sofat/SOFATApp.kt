@@ -446,14 +446,16 @@ fun SOFATApp() {
             title = { Text("How to use") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("1. Set your office locations (team hub, and any other offices)", style = MaterialTheme.typography.titleSmall)
-                    Text("2. Set your office Wi-Fi settings (network name / SSID) and how often to scan for attendance")
-                    Text("3. Give the app permissions to access your location at all times")
-                    Text("4. Monitor your attendance statistics in the main dashboard.")
+                    Text("1. Set your office locations", style = MaterialTheme.typography.titleSmall)
+                    Text("2. Set your office Wi-Fi settings and how often to scan for attendance")
+                    Text("3. Give the app permission to run in background at all times")
+                    Text("4. Monitor attendance statistics.")
 
                     Spacer(Modifier.height(8.dp))
+                    Text("--- Optional ---")
+                    Spacer(Modifier.height(8.dp))
 
-                    Text("(Optional) Tap a date to plan ahead (inner circle):", style = MaterialTheme.typography.titleSmall)
+                    Text("Tap a date to plan ahead (inner circle):", style = MaterialTheme.typography.titleSmall)
                     Text("- Date by default: Work from home")
                     Text("- Tap once: Work at Team hub")
                     Text("- Tap again: Work at another office")
@@ -461,8 +463,7 @@ fun SOFATApp() {
                     Text("- Tap again to repeat the above")
 
                     Spacer(Modifier.height(8.dp))
-
-                    Text("Tap and hold a date to manually set actual office attendance (outer ring)", style = MaterialTheme.typography.titleSmall)
+                    Text("Tap and hold a date to manually set actual office attendance (outer circle).")
                 }
             },
             confirmButton = {
