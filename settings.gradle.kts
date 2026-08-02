@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SOFAT"
+rootProject.name = "InOffice"
 include(":app")

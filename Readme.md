@@ -1,6 +1,6 @@
-# SOFAT - Office Attendance Tracker
+# InOffice - Office Attendance Tracker
 
-SOFAT is a lightweight Android application designed to help employees track their office attendance and ensure they meet organizational requirements. It provides a simple calendar interface to log planned and actual work locations, automatically calculating key statistics such as in-office percentage and "Team Hub" days.
+InOffice is a lightweight Android application designed to help employees track their office attendance and ensure they meet organizational requirements. It provides a simple calendar interface to log planned and actual work locations, automatically calculating key statistics such as in-office percentage and "Team Hub" days.
 
 ## Key Features
 - **Manual Logging**: Tap to set planned work locations and long-press to set actual attendance.
@@ -14,4 +14,4 @@ SOFAT is a lightweight Android application designed to help employees track thei
 ## Changelog
 
 ### Version 1.0.0
-*   First release (rebranded from old SwfhT app)
+*   First release (rebranded from SOFAT)

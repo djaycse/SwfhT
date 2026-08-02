@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="net.qs.sofat"
+    package="net.qs.inoffice"
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -13,16 +13,16 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_sofat_logo"
+        android:icon="@mipmap/ic_inoffice_logo"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_sofat_logo_round"
+        android:roundIcon="@mipmap/ic_inoffice_logo_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SOFAT">
+        android:theme="@style/Theme.InOffice">
         <activity
-            android:name="net.qs.sofat.MainActivity"
+            android:name="net.qs.inoffice.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.SOFAT"
+            android:theme="@style/Theme.InOffice"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

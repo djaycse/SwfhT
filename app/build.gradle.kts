@@ -14,7 +14,7 @@ val vName = versionProps.getProperty("versionName", "1.0")
 val vCode = versionProps.getProperty("versionCode", "1").toInt()
 
 android {
-    namespace = "net.qs.sofat"
+    namespace = "net.qs.inoffice"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -39,7 +39,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "net.qs.sofat"
+        applicationId = "net.qs.inoffice"
         minSdk = 28
         targetSdk = 36
         versionCode = vCode
@@ -69,7 +69,7 @@ android {
 androidComponents {
     onVariants(selector().withBuildType("release")) { variant ->
         variant.outputs.forEach { output ->
-            output.outputFileName.set("SOFAT-$vName.apk")
+            output.outputFileName.set("InOffice-$vName.apk")
         }
     }
 }
