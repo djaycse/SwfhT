@@ -39,13 +39,6 @@ class LocationWorker(context: Context, params: WorkerParameters) : CoroutineWork
             return Result.failure()
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // Background location is missing. Detection will likely fail.
-                // We proceed just in case, but this is a common failure point.
-            }
-        }
-
         // Try to see if we are currently connected to the target wifi
         val currentSsid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val activeNetwork = connectivityManager.activeNetwork
@@ -76,6 +69,7 @@ class LocationWorker(context: Context, params: WorkerParameters) : CoroutineWork
                 val ssid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     result.wifiSsid?.toString()?.removeSurrounding("\"")
                 } else {
+                    @Suppress("DEPRECATION")
                     result.SSID?.removeSurrounding("\"")
                 }
                 ssid == wifiSsid
@@ -83,8 +77,8 @@ class LocationWorker(context: Context, params: WorkerParameters) : CoroutineWork
         }
 
         if (!isAtWorkWifi) {
-            // Not at work wifi, clear current location label if it exists
             if (!currentState.locationName.isNullOrEmpty()) {
+                store.addGpsLog("- ${currentState.locationName}")
                 store.save(today, currentState.copy(locationName = null))
             }
             return Result.success()
@@ -101,35 +95,38 @@ class LocationWorker(context: Context, params: WorkerParameters) : CoroutineWork
             null
         }
 
-        if (currentLocation == null) return Result.success() // Can't get location, maybe next time
+        if (currentLocation == null) return Result.success()
 
         val officeLocations = store.officeLocations.first()
-        val match = officeLocations.find { office ->
-            calculateDistance(currentLocation.latitude, currentLocation.longitude, office.lat, office.lng) <= 50
+        var matchFound = false
+        for (office in officeLocations) {
+            val dist = calculateDistance(currentLocation.latitude, currentLocation.longitude, office.lat, office.lng)
+            if (dist <= 50) {
+                matchFound = true
+                
+                if (currentState.locationName != office.name) {
+                    store.addGpsLog("+ ${office.name}")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(applicationContext, "Detected: ${office.name}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                
+                val newActual = if (currentState.actual == WorkLocation.HOME || currentState.actual == WorkLocation.LEAVE) {
+                    office.type
+                } else {
+                    currentState.actual
+                }
+
+                if (newActual != currentState.actual || currentState.locationName != office.name) {
+                    store.save(today, currentState.copy(actual = newActual, locationName = office.name))
+                }
+                break
+            }
         }
 
-        if (match != null) {
-            // Only toast if location changed or was empty
-            if (currentState.locationName != match.name) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(applicationContext, "Detected you are in location ${match.name}", Toast.LENGTH_SHORT).show()
-                }
-            }
-            
-            // Only update 'actual' if it's currently HOME or LEAVE.
-            // This ensures once an office state is set, it remains as is for the day.
-            val newActual = if (currentState.actual == WorkLocation.HOME || currentState.actual == WorkLocation.LEAVE) {
-                match.type
-            } else {
-                currentState.actual
-            }
-
-            if (newActual != currentState.actual || currentState.locationName != match.name) {
-                store.save(today, currentState.copy(actual = newActual, locationName = match.name))
-            }
-        } else {
-            // At work wifi but no office match, clear location name
+        if (!matchFound) {
             if (!currentState.locationName.isNullOrEmpty()) {
+                store.addGpsLog("- ${currentState.locationName}")
                 store.save(today, currentState.copy(locationName = null))
             }
         }

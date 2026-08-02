@@ -67,7 +67,7 @@ fun WifiSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Wi-Fi & Polling Settings") },
+                title = { Text("Auto-detect") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -82,11 +82,6 @@ fun WifiSettingsScreen(
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
-            Text(
-                "Office auto-detection settings",
-                style = MaterialTheme.typography.titleMedium
-            )
-
             Text(
                 "The app will periodically check if the specified office Wi-Fi network is available. If found, the app will cross-check your GPS location and automatically set your attendance.",
                 style = MaterialTheme.typography.bodySmall,

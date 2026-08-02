@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
@@ -34,6 +35,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -82,6 +84,7 @@ fun InOfficeApp() {
     var showOfficeLocations by remember { mutableStateOf(false) }
     var showWifiSettings by remember { mutableStateOf(false) }
     var showGoalSettings by remember { mutableStateOf(false) }
+    var showGpsLog by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
 
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -133,6 +136,15 @@ fun InOfficeApp() {
         GoalSettingsScreen(
             store = store,
             onBack = { showGoalSettings = false }
+        )
+        return
+    }
+
+    if (showGpsLog) {
+        BackHandler { showGpsLog = false }
+        GpsLogScreen(
+            store = store,
+            onBack = { showGpsLog = false }
         )
         return
     }
@@ -192,7 +204,7 @@ fun InOfficeApp() {
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Office locations") },
+                                text = { Text("Offices") },
                                 onClick = {
                                     menuExpanded = false
                                     showOfficeLocations = true
@@ -202,7 +214,7 @@ fun InOfficeApp() {
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Wi-Fi Settings") },
+                                text = { Text("Auto-detect") },
                                 onClick = {
                                     menuExpanded = false
                                     showWifiSettings = true
@@ -212,13 +224,23 @@ fun InOfficeApp() {
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Attendance Goals") },
+                                text = { Text("Goals") },
                                 onClick = {
                                     menuExpanded = false
                                     showGoalSettings = true
                                 },
                                 leadingIcon = {
                                     Icon(Icons.Default.Settings, contentDescription = null)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Log") },
+                                onClick = {
+                                    menuExpanded = false
+                                    showGpsLog = true
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.AutoMirrored.Filled.ListAlt, contentDescription = null)
                                 }
                             )
                             DropdownMenuItem(
@@ -255,6 +277,7 @@ fun InOfficeApp() {
                 MonthHeader(
                     month = currentMonth,
                     onPrev = { currentMonth = currentMonth.minusMonths(1) },
+                    onToday = { currentMonth = YearMonth.now() },
                     onNext = { currentMonth = currentMonth.plusMonths(1) }
                 )
 
@@ -462,22 +485,16 @@ fun InOfficeApp() {
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(
-                        "1. Set your office locations",
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                    Text("2. Set your office Wi-Fi settings and how often to scan for attendance")
-                    Text("3. Give the app permission to run in background at all times")
-                    Text("4. Monitor attendance statistics.")
+                    Text("1. Set your office locations")
+                    Text("2. Set auto-detect settings")
+                    Text("3. Set your attendance goals")
+                    Text("4. Monitor statistics on main screen.")
 
                     Spacer(Modifier.height(8.dp))
-                    Text("--- Optional ---")
+                    Text("--- Optional ---", style = MaterialTheme.typography.titleSmall)
                     Spacer(Modifier.height(8.dp))
 
-                    Text(
-                        "Tap a date to plan ahead (inner circle):",
-                        style = MaterialTheme.typography.titleSmall
-                    )
+                    Text("5. Tap a date to plan ahead (inner circle):")
                     Text("- Date by default: Work from home")
                     Text("- Tap once: Work at Team hub")
                     Text("- Tap again: Work at another office")
@@ -485,7 +502,7 @@ fun InOfficeApp() {
                     Text("- Tap again to repeat the above")
 
                     Spacer(Modifier.height(8.dp))
-                    Text("Tap and hold a date to manually set actual office attendance (outer circle).")
+                    Text("6. Tap and hold a date to manually set actual office attendance (outer circle).")
                 }
             },
             confirmButton = {
@@ -499,19 +516,64 @@ fun InOfficeApp() {
     if (showAbout) {
         AlertDialog(
             onDismissRequest = { showAbout = false },
-            title = { Text("InOffice...") },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text("A simple office attendance planned and tracker.")
-                    Spacer(Modifier.height(16.dp))
-                    Text("Developed by djaycse.")
-                    Spacer(Modifier.height(16.dp))
-                    Text("Copyright © 2026")
-                }
-            },
             confirmButton = {
                 TextButton(onClick = { showAbout = false }) {
                     Text("Close")
+                }
+            },
+            title = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    AndroidView(
+                        factory = { ctx ->
+                            ImageView(ctx).apply {
+                                setImageResource(R.drawable.inoffice_logo)
+                                clipToOutline = true
+                            }
+                        },
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "InOffice",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Text(
+                        "v${BuildConfig.VERSION_NAME}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        "A simple office attendance planner and tracker designed to help you stay on top of your work-from-office goals.",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    
+                    Text(
+                        "Developed by djaycse.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        "Copyright © 2026",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         )

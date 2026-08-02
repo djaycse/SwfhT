@@ -22,6 +22,7 @@ class WorkDataStore(private val context: Context) {
         private val KEY_POLL_INTERVAL = stringPreferencesKey("poll_interval")
         private val KEY_GOAL_OFFICE_PERCENT = stringPreferencesKey("goal_office_percent")
         private val KEY_GOAL_TEAM_HUB_DAYS = stringPreferencesKey("goal_team_hub_days")
+        private val KEY_GPS_LOG = stringPreferencesKey("gps_log")
     }
 
     // Read full map
@@ -186,6 +187,31 @@ class WorkDataStore(private val context: Context) {
     suspend fun saveGoalTeamHubDays(days: Int) {
         context.dataStore.edit { prefs ->
             prefs[KEY_GOAL_TEAM_HUB_DAYS] = days.toString()
+        }
+    }
+
+    val gpsLog: Flow<String> =
+        context.dataStore.data.map { prefs ->
+            prefs[KEY_GPS_LOG] ?: ""
+        }
+
+    suspend fun addGpsLog(entry: String) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[KEY_GPS_LOG] ?: ""
+            val timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            val newLog = if (current.isEmpty()) "$timestamp $entry" else "$current\n$timestamp $entry"
+
+            // Keep a rolling log of up to 100 entries
+            val lines = newLog.lines()
+            val limitedLog = if (lines.size > 100) lines.takeLast(100).joinToString("\n") else newLog
+
+            prefs[KEY_GPS_LOG] = limitedLog
+        }
+    }
+
+    suspend fun clearGpsLog() {
+        context.dataStore.edit { prefs ->
+            prefs.remove(KEY_GPS_LOG)
         }
     }
 }

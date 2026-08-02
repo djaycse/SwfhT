@@ -1,6 +1,10 @@
 package net.qs.inoffice
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -11,6 +15,7 @@ import java.time.YearMonth
 fun MonthHeader(
     month: YearMonth,
     onPrev: () -> Unit,
+    onToday: () -> Unit,
     onNext: () -> Unit
 ) {
     Row(
@@ -18,13 +23,23 @@ fun MonthHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Button(onClick = onPrev) { Text("<") }
-
         Text(
             text = "${month.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${month.year}",
             style = MaterialTheme.typography.titleLarge
         )
 
-        Button(onClick = onNext) { Text(">") }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onPrev) {
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous Month")
+            }
+            
+            IconButton(onClick = onToday) {
+                Icon(Icons.Default.Today, contentDescription = "Current Month")
+            }
+
+            IconButton(onClick = onNext) {
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next Month")
+            }
+        }
     }
 }

@@ -28,7 +28,7 @@ fun GoalSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Attendance Goals") },
+                title = { Text("Goals") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -44,12 +44,7 @@ fun GoalSettingsScreen(
                 .fillMaxSize()
         ) {
             Text(
-                "Configure your requirements",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Text(
-                "Set the targets for your office attendance and team hub days. These will be used to calculate your progress on the main dashboard.",
+                "Set your goals for office attendance. These can then be tracked on the main dashboard.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
